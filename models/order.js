@@ -10,7 +10,8 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      Order.hasMany(models.OrderItem, { foreignKey: 'orderId', as: 'orderItems' });
+      Order.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
   Order.init({
