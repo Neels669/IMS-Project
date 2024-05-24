@@ -5,5 +5,19 @@
     "database": "inventory_management_system",
     "host": "localhost",
     "dialect": "mysql"
+  },
+  "test": {
+    "username": "test_user",
+    "password": "test_password",
+    "database": "inventory_management_system_test",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "prod_user",
+    "password": "prod_password",
+    "database": "inventory_management_system_production",
+    "host": "localhost",
+    "dialect": "mysql"
   }
 }

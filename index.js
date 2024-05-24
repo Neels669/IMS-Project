@@ -43,3 +43,5 @@ db.sequelize.sync().then(() => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });
 });
+
+module.exports = app;
