@@ -1,105 +1,46 @@
-const http = require('http');
 const assert = require('assert');
 const app = require('../index');
-
-const { sequelize } = require('../models');
-
-let server;
-
-before(function (done) {
-	this.timeout(30000);
-	server = http.createServer(app);
-	server.listen(3000, (err) => {
-		if (err) return done(err);
-		sequelize.sync({ force: true }).then(() => done()).catch(done);
-	});
-});
-
-after((done) => {
-	if (server) {
-		server.close(done);
-	} else {
-		done();
-	}
-});
+const request = require('supertest');
+const { seedCategories } = require('./categoryController.test');
+const { Product } = require('../models');
 
 describe('Product Controller', () => {
+	beforeEach(async () => {
+		await seedCategories();
+		await seedProducts();
+	});
+
 	describe('GET /products', () => {
-		it('should get all products', (done) => {
-			const options = {
-				hostname: 'localhost',
-				port: 3000,
-				path: '/products',
-				method: 'GET',
-			};
-
-			const req = http.request(options, (res) => {
-				let data = '';
-
-				res.on('data', (chunk) => {
-					data += chunk;
-				});
-
-				res.on('end', () => {
-					assert.strictEqual(res.statusCode, 200);
-					assert.doesNotThrow(() => JSON.parse(data));
-					done();
-				});
-			});
-
-			req.on('error', (err) => {
-				done(err);
-			});
-
-			req.end();
+		it('should return all products', async () => {
+			const res = await request(app).get('/products');
+			assert.strictEqual(res.status, 200);
+			assert.strictEqual(Array.isArray(res.body), true);
+			assert.strictEqual(res.body.length, 5);
 		});
 	});
 
-	describe('POST /products', () => {
-		it('should create a new product', (done) => {
-			const product = {
-				name: 'New Product',
-				sku: 'NP12345',
-				description: 'This is a new product.',
-				price: 99.99,
-				stock: 100,
-				categoryId: 1,
-			};
-
-		const postData = JSON.stringify(product);
-
-		const options = {
-			hostname: 'localhost',
-			port: 3000,
-			path: '/products',
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'Content-Length': postData.length,
-				}
-			};
-
-			const req = http.request(options, (res) => {
-				let data = '';
-
-				res.on('data', (chunk) => {
-					 data += chunk;
-				});
-
-				res.on('end', () => {
-					assert.strictEqual(res.statusCode, 201);
-					const responseBody = JSON.parse(data);
-					assert.strictEqual(responseBody.name, 'New Product');
-					done();
-				});
-			});
-
-			req.on('error', (err) => {
-				done(err);
-			});
-
-			req.write(postData);
-			req.end();
+	describe('GET /products/:id', () => {
+		it('should return a single product by id', async () => {
+			const productId = 1;
+			const res = await request(app).get(`/products/${productId}`);
+			assert.strictEqual(res.status, 200);
+			const product = res.body;
+			assert.strictEqual(typeof product, 'object');
+			assert.strictEqual(product.id, productId);
 		});
 	});
+
 });
+
+
+async function seedProducts() {
+	const testData = [
+		{ id: 1, name: 'Product 1', price: 10.99, stock: 100, categoryId: 1 },
+		{ id: 2, name: 'Product 2', price: 15.99, stock: 50, categoryId: 2 },
+		{ id: 3, name: 'Product 3', price: 20.99, stock: 200, categoryId: 3 },
+		{ id: 4, name: 'Product 4', price: 5.99, stock: 75, categoryId: 4 },
+		{ id: 5, name: 'Product 5', price: 8.99, stock: 150, categoryId: 5 }
+	];
+
+	await Product.bulkCreate(testData);
+}

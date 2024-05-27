@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const extractUserId = require('../middleware/extractUserId');
 
 // Routes for users
 router.post('/register', userController.registerUser);
@@ -23,5 +24,8 @@ function authenticateToken(req, res, next) {
     next();
   });
 }
+
+// Apply the extractUserId middleware to the getUserDetails route
+router.get('/user-details', extractUserId, userController.getUserDetails);
 
 module.exports = router;
