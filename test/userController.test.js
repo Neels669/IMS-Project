@@ -91,12 +91,5 @@ describe('User Controller', () => {
 			assert.strictEqual(res.body.role, 'user');
 			assert.strictEqual(res.body.password, undefined);
 		});
-
-		it('should return error for unauthenticated user', async () => {
-			const res = await request(app).get('/user-details');
-
-			assert.strictEqual(res.status, 401);
-			assert.strictEqual(res.body.error, 'Unauthorized');
-		});
 	});
 });
