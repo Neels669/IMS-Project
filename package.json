@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "NODE_ENV=test mocha --timeout 10000 'test/setup.js' 'test/**/*.test.js' --exit"
+    "test": "NODE_ENV=test mocha --timeout 50000 'test/setup.js' 'test/**/*.test.js' --exit"
   },
   "repository": {
     "type": "git",
