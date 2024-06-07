@@ -1,4 +1,5 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 const environments = {
 	development: {
@@ -26,4 +27,4 @@ const environments = {
 
 const currentEnv = process.env.NODE_ENV || 'development';
 
-module.exports = environments[currentEnv];
+export default environments[currentEnv];

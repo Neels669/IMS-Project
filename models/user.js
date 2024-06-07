@@ -1,17 +1,16 @@
-'use strict';
-const { Model } = require('sequelize');
+import { Model, DataTypes } from 'sequelize';
 
-module.exports = (sequelize, DataTypes) => {
-  class User extends Model {
-    static associate(models) {
-      User.hasMany(models.Order, { foreignKey: 'userId', as: 'orders' });
-    }
+class User extends Model {
+  static associate(models) {
+    User.hasMany(models.Order, { foreignKey: 'userId', as: 'orders' });
   }
+}
 
+export default (sequelize) => {
   User.init({
     username: DataTypes.STRING,
     password: DataTypes.STRING,
-    role: DataTypes.STRING
+    role: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'User',

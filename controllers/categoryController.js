@@ -1,8 +1,6 @@
-const db = require('../models');
+import db from '../models/index.js';
 
-// Controller functions for handling CRUD operations on categories
 const categoryController = {
-  // Get all categories
   getAllCategories: async (req, res) => {
     try {
       const categories = await db.Category.findAll();
@@ -13,7 +11,6 @@ const categoryController = {
     }
   },
 
-  // Get category by ID
   getCategoryById: async (req, res) => {
     const categoryId = req.params.id;
     try {
@@ -28,7 +25,6 @@ const categoryController = {
     }
   },
 
-  // Create a new category
   createCategory: async (req, res) => {
     const { name } = req.body;
     try {
@@ -40,7 +36,6 @@ const categoryController = {
     }
   },
 
-  // Update an existing category
   updateCategory: async (req, res) => {
     const categoryId = req.params.id;
     const { name } = req.body;
@@ -57,7 +52,6 @@ const categoryController = {
     }
   },
 
-  // Delete a category
   deleteCategory: async (req, res) => {
     const categoryId = req.params.id;
     try {
@@ -74,4 +68,4 @@ const categoryController = {
   }
 };
 
-module.exports = categoryController;
+export default categoryController;

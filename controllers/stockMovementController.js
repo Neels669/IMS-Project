@@ -1,6 +1,5 @@
-const db = require('../models');
+import db from '../models/index.js';
 
-// Controller functions for stock movements
 const stockMovementController = {
   getAllStockMovements: async (req, res) => {
     try {
@@ -61,4 +60,4 @@ const stockMovementController = {
   }
 };
 
-module.exports = stockMovementController;
+export default stockMovementController;

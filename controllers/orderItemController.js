@@ -1,6 +1,5 @@
-const db = require('../models');
+import db from '../models/index.js';
 
-// Controller functions for order items
 const orderItemController = {
   getAllOrderItems: async (req, res) => {
     try {
@@ -61,4 +60,4 @@ const orderItemController = {
   }
 };
 
-module.exports = orderItemController;
+export default orderItemController;
