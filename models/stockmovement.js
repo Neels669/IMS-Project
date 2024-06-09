@@ -1,20 +1,13 @@
-import { Model, DataTypes } from 'sequelize';
-
-class StockMovement extends Model {
-  static associate(models) {
-    StockMovement.belongsTo(models.Product, { foreignKey: 'productId', as: 'product' });
-  }
-}
-
-export default (sequelize) => {
-  StockMovement.init({
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+  const StockMovement = sequelize.define('StockMovement', {
     productId: DataTypes.INTEGER,
-    quantity: DataTypes.INTEGER,
-    type: DataTypes.STRING,
-  }, {
-    sequelize,
-    modelName: 'StockMovement',
-  });
-
+    categoryId: DataTypes.INTEGER,
+    change: DataTypes.INTEGER
+  }, {});
+  StockMovement.associate = function(models) {
+    StockMovement.belongsTo(models.Product);
+    StockMovement.belongsTo(models.Category);
+  };
   return StockMovement;
 };

@@ -1,18 +1,10 @@
-import { Model, DataTypes } from 'sequelize';
-
-class Category extends Model {
-  static associate(models) {
-    Category.hasMany(models.Product, { foreignKey: 'categoryId', as: 'products' });
-  }
-}
-
-export default (sequelize) => {
-  Category.init({
-    name: DataTypes.STRING,
-  }, {
-    sequelize,
-    modelName: 'Category',
-  });
-
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+  const Category = sequelize.define('Category', {
+    name: DataTypes.STRING
+  }, {});
+  Category.associate = function(models) {
+    Category.hasMany(models.Product);
+  };
   return Category;
 };

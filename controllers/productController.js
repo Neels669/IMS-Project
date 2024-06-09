@@ -1,64 +1,85 @@
-import db from '../models/index.js';
+const { Product, Category } = require('../models');
 
-const productController = {
-  getAllProducts: async (req, res) => {
-    try {
-      const products = await db.Product.findAll();
-      res.json(products);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+async function createProduct() {
+  const inquirer = (await import('inquirer')).default;
+  const categories = await Category.findAll();
+  const categoryChoices = categories.map(category => ({ name: category.name, value: category.id }));
 
-  getProductById: async (req, res) => {
-    try {
-      const product = await db.Product.findByPk(req.params.id);
-      if (product) {
-        res.json(product);
-      } else {
-        res.status(404).json({ error: 'Product not found' });
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  const answers = await inquirer.prompt([
+    { type: 'input', name: 'name', message: 'Enter product name (or type "back" to return):' },
+    { type: 'input', name: 'description', message: 'Enter product description:' },
+    { type: 'input', name: 'quantity', message: 'Enter product quantity:' },
+    { type: 'input', name: 'price', message: 'Enter product price:' },
+    { type: 'list', name: 'categoryId', message: 'Select product category:', choices: categoryChoices }
+  ]);
 
-  createProduct: async (req, res) => {
-    try {
-      const product = await db.Product.create(req.body);
-      res.status(201).json(product);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  if (answers.name.toLowerCase() === 'back') return;
 
-  updateProduct: async (req, res) => {
-    try {
-      const product = await db.Product.findByPk(req.params.id);
-      if (product) {
-        await product.update(req.body);
-        res.json(product);
-      } else {
-        res.status(404).json({ error: 'Product not found' });
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  await Product.create({
+    name: answers.name,
+    description: answers.description,
+    quantity: parseInt(answers.quantity),
+    price: parseFloat(answers.price),
+    categoryId: answers.categoryId
+  });
 
-  deleteProduct: async (req, res) => {
-    try {
-      const product = await db.Product.findByPk(req.params.id);
-      if (product) {
-        await product.destroy();
-        res.json({ message: 'Product deleted' });
-      } else {
-        res.status(404).json({ error: 'Product not found' });
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-};
+  console.log('Product created successfully!');
+}
 
-export default productController;
+async function listProducts() {
+  const products = await Product.findAll({ include: Category });
+  console.log(products.map(p => p.toJSON()));
+}
+
+async function editProduct() {
+  const inquirer = (await import('inquirer')).default;
+  const products = await Product.findAll();
+  const productChoices = products.map(product => ({ name: product.name, value: product.id }));
+
+  const categories = await Category.findAll();
+  const categoryChoices = categories.map(category => ({ name: category.name, value: category.id }));
+
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select product to edit (or type "back" to return):', choices: [...productChoices, { name: 'back', value: 'back' }] }
+  ]);
+
+  if (answers.id === 'back') return;
+
+  const editAnswers = await inquirer.prompt([
+    { type: 'input', name: 'name', message: 'Enter new product name:' },
+    { type: 'input', name: 'description', message: 'Enter new product description:' },
+    { type: 'input', name: 'quantity', message: 'Enter new product quantity:' },
+    { type: 'input', name: 'price', message: 'Enter new product price:' },
+    { type: 'list', name: 'categoryId', message: 'Select new product category:', choices: categoryChoices }
+  ]);
+
+  await Product.update(
+    { 
+      name: editAnswers.name, 
+      description: editAnswers.description,
+      quantity: parseInt(editAnswers.quantity),
+      price: parseFloat(editAnswers.price),
+      categoryId: editAnswers.categoryId 
+    },
+    { where: { id: parseInt(answers.id) } }
+  );
+
+  console.log('Product updated successfully!');
+}
+
+async function deleteProduct() {
+  const inquirer = (await import('inquirer')).default;
+  const products = await Product.findAll();
+  const productChoices = products.map(product => ({ name: product.name, value: product.id }));
+
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select product to delete (or type "back" to return):', choices: [...productChoices, { name: 'back', value: 'back' }] }
+  ]);
+
+  if (answers.id === 'back') return;
+
+  await Product.destroy({ where: { id: parseInt(answers.id) } });
+  console.log('Product deleted successfully!');
+}
+
+module.exports = { createProduct, listProducts, editProduct, deleteProduct };

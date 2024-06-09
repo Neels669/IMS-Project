@@ -1,71 +1,61 @@
-import db from '../models/index.js';
+const { Category } = require('../models');
 
-const categoryController = {
-  getAllCategories: async (req, res) => {
-    try {
-      const categories = await db.Category.findAll();
-      res.json(categories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      res.status(500).json({ error: 'Failed to fetch categories' });
-    }
-  },
+async function createCategory() {
+  const inquirer = (await import('inquirer')).default;
+  const answers = await inquirer.prompt([
+    { type: 'input', name: 'name', message: 'Enter category name (or type "back" to return):' }
+  ]);
 
-  getCategoryById: async (req, res) => {
-    const categoryId = req.params.id;
-    try {
-      const category = await db.Category.findByPk(categoryId);
-      if (!category) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-      res.json(category);
-    } catch (error) {
-      console.error('Error fetching category by ID:', error);
-      res.status(500).json({ error: 'Failed to fetch category' });
-    }
-  },
+  if (answers.name.toLowerCase() === 'back') return;
 
-  createCategory: async (req, res) => {
-    const { name } = req.body;
-    try {
-      const newCategory = await db.Category.create({ name });
-      res.status(201).json(newCategory);
-    } catch (error) {
-      console.error('Error creating category:', error);
-      res.status(500).json({ error: 'Failed to create category' });
-    }
-  },
+  await Category.create({
+    name: answers.name
+  });
 
-  updateCategory: async (req, res) => {
-    const categoryId = req.params.id;
-    const { name } = req.body;
-    try {
-      const category = await db.Category.findByPk(categoryId);
-      if (!category) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-      await category.update({ name });
-      res.json(category);
-    } catch (error) {
-      console.error('Error updating category:', error);
-      res.status(500).json({ error: 'Failed to update category' });
-    }
-  },
+  console.log('Category created successfully!');
+}
 
-  deleteCategory: async (req, res) => {
-    const categoryId = req.params.id;
-    try {
-      const category = await db.Category.findByPk(categoryId);
-      if (!category) {
-        return res.status(404).json({ error: 'Category not found' });
-      }
-      await category.destroy();
-      res.json({ message: 'Category deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      res.status(500).json({ error: 'Failed to delete category' });
-    }
-  }
-};
+async function listCategories() {
+  const categories = await Category.findAll();
+  console.log(categories.map(c => c.toJSON()));
+}
 
-export default categoryController;
+async function editCategory() {
+  const inquirer = (await import('inquirer')).default;
+  const categories = await Category.findAll();
+  const categoryChoices = categories.map(category => ({ name: category.name, value: category.id }));
+
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select category to edit (or type "back" to return):', choices: [...categoryChoices, { name: 'back', value: 'back' }] }
+  ]);
+
+  if (answers.id === 'back') return;
+
+  const editAnswers = await inquirer.prompt([
+    { type: 'input', name: 'name', message: 'Enter new category name:' }
+  ]);
+
+  await Category.update(
+    { name: editAnswers.name },
+    { where: { id: parseInt(answers.id) } }
+  );
+
+  console.log('Category updated successfully!');
+}
+
+async function deleteCategory() {
+  const inquirer = (await import('inquirer')).default;
+  const categories = await Category.findAll();
+  const categoryChoices = categories.map(category => ({ name: category.name, value: category.id }));
+
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select category to delete (or type "back" to return):', choices: [...categoryChoices, { name: 'back', value: 'back' }] }
+  ]);
+
+  if (answers.id === 'back') return;
+
+  await Category.destroy({ where: { id: parseInt(answers.id) } });
+  console.log('Category deleted successfully!');
+}
+
+module.exports = { createCategory, listCategories, editCategory, deleteCategory };

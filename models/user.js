@@ -1,20 +1,11 @@
-import { Model, DataTypes } from 'sequelize';
-
-class User extends Model {
-  static associate(models) {
-    User.hasMany(models.Order, { foreignKey: 'userId', as: 'orders' });
-  }
-}
-
-export default (sequelize) => {
-  User.init({
-    username: DataTypes.STRING,
-    password: DataTypes.STRING,
-    role: DataTypes.STRING,
-  }, {
-    sequelize,
-    modelName: 'User',
-  });
-
+'use strict';
+module.exports = (sequelize, DataTypes) => {
+  const User = sequelize.define('User', {
+    username: { type: DataTypes.STRING, unique: true },
+    password: DataTypes.STRING
+  }, {});
+  User.associate = function(models) {
+    User.hasMany(models.Order);
+  };
   return User;
 };

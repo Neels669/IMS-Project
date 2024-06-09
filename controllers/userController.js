@@ -1,69 +1,67 @@
-import db from '../models/index.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const { User } = require('../models');
 
-const userController = {
-  registerUser: async (req, res) => {
-    try {
-      const existingUser = await db.User.findOne({ where: { username: req.body.username } });
-      if (existingUser) {
-        return res.status(400).json({ error: 'Username already exists' });
-      }
+async function createUser() {
+  const inquirer = (await import('inquirer')).default;
+  const answers = await inquirer.prompt([
+    { type: 'input', name: 'username', message: 'Enter username (or type "back" to return):' },
+    { type: 'password', name: 'password', message: 'Enter password:' }
+  ]);
 
-      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+  if (answers.username.toLowerCase() === 'back') return;
 
-      const newUser = await db.User.create({
-        username: req.body.username,
-        password: hashedPassword,
-        role: req.body.role
-      });
+  await User.create({
+    username: answers.username,
+    password: answers.password
+  });
 
-      const userWithoutPassword = {
-        id: newUser.id,
-        username: newUser.username,
-        role: newUser.role,
-        createdAt: newUser.createdAt,
-        updatedAt: newUser.updatedAt
-      };
+  console.log('User created successfully!');
+}
 
-      res.json(userWithoutPassword);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+async function listUsers() {
+  const users = await User.findAll();
+  console.log(users.map(user => user.toJSON()));
+}
 
-  loginUser: async (req, res) => {
-    try {
-      const user = await db.User.findOne({ where: { username: req.body.username } });
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+async function editUser() {
+  const inquirer = (await import('inquirer')).default;
+  const users = await User.findAll();
+  const userChoices = users.map(user => ({ name: user.username, value: user.id }));
 
-      const passwordMatch = await bcrypt.compare(req.body.password, user.password);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select user to edit (or type "back" to return):', choices: [...userChoices, { name: 'back', value: 'back' }] }
+  ]);
 
-      const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  if (answers.id === 'back') return;
 
-      res.json({ token });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  const editAnswers = await inquirer.prompt([
+    { type: 'input', name: 'username', message: 'Enter new username:' },
+    { type: 'password', name: 'password', message: 'Enter new password:' }
+  ]);
 
-  getUserDetails: async (req, res) => {
-    try {
-      const userId = req.userId;
-      const user = await db.User.findByPk(userId, { attributes: { exclude: ['password'] } });
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      res.json(user);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-};
+  await User.update(
+    { 
+      username: editAnswers.username, 
+      password: editAnswers.password 
+    },
+    { where: { id: parseInt(answers.id) } }
+  );
 
-export default userController;
+  console.log('User updated successfully!');
+}
+
+async function deleteUser() {
+  const inquirer = (await import('inquirer')).default;
+  const users = await User.findAll();
+  const userChoices = users.map(user => ({ name: user.username, value: user.id }));
+
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'id', message: 'Select user to delete (or type "back" to return):', choices: [...userChoices, { name: 'back', value: 'back' }] }
+  ]);
+
+  if (answers.id === 'back') return;
+
+  await User.destroy({ where: { id: parseInt(answers.id) } });
+  console.log('User deleted successfully!');
+}
+
+module.exports = { createUser, listUsers, editUser, deleteUser };

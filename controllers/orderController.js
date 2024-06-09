@@ -1,92 +1,50 @@
-import db from '../models/index.js';
+const { Order, Product, StockMovement, User, Category } = require('../models');
 
-const orderController = {
-  getAllOrders: async (req, res) => {
-    try {
-      const orders = await db.Order.findAll();
-      res.json(orders);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+async function createOrder() {
+  const inquirer = (await import('inquirer')).default;
+  const products = await Product.findAll();
+  const productChoices = products.map(product => ({ name: `${product.name} (Stock: ${product.quantity})`, value: product.id }));
 
-  getOrderById: async (req, res) => {
-    try {
-      const orderId = req.params.id;
-      const order = await db.Order.findByPk(orderId);
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  const users = await User.findAll();
+  const userChoices = users.map(user => ({ name: user.username, value: user.id }));
 
-  createOrder: async (req, res) => {
-    const { userId, status, total, orderItems } = req.body;
-    if (!userId || !status || !total) {
-      return res.status(400).json({ error: 'Invalid order data' });
-    }
-    try {
-      const order = await db.Order.create({ userId, status, total });
-      if (orderItems && orderItems.length > 0) {
-        for (const item of orderItems) {
-          await db.OrderItem.create({
-            orderId: order.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price
-          });
-        }
-      }
-      res.status(201).json(order);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  const answers = await inquirer.prompt([
+    { type: 'list', name: 'productId', message: 'Select product:', choices: productChoices },
+    { type: 'input', name: 'quantity', message: 'Enter quantity:' },
+    { type: 'list', name: 'userId', message: 'Select user:', choices: userChoices }
+  ]);
 
-  updateOrder: async (req, res) => {
-    const orderId = req.params.id;
-    const { status, total, orderItems } = req.body;
-    try {
-      const order = await db.Order.findByPk(orderId);
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      await order.update({ status, total });
-      if (orderItems && orderItems.length > 0) {
-        for (const item of orderItems) {
-          await db.OrderItem.update(
-            {
-              quantity: item.quantity,
-              price: item.price
-            },
-            {
-              where: { orderId: order.id, productId: item.productId }
-            }
-          );
-        }
-      }
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  },
+  const product = await Product.findByPk(answers.productId);
 
-  deleteOrder: async (req, res) => {
-    const orderId = req.params.id;
-    try {
-      const order = await db.Order.findByPk(orderId);
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      await order.destroy();
-      res.json({ message: 'Order deleted successfully' });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+  if (product.quantity < parseInt(answers.quantity)) {
+    console.log('Insufficient stock!');
+    return;
   }
-};
 
-export default orderController;
+  await Order.create({
+    userId: parseInt(answers.userId),
+    productId: parseInt(answers.productId),
+    quantity: parseInt(answers.quantity)
+  });
+
+  // Update product stock
+  product.quantity -= parseInt(answers.quantity);
+  await product.save();
+
+  // Record stock movement
+  await StockMovement.create({
+    productId: product.id,
+    categoryId: product.categoryId,
+    change: -parseInt(answers.quantity)
+  });
+
+  console.log('Order created and stock updated successfully!');
+}
+
+async function listOrders() {
+  const inquirer = (await import('inquirer')).default;
+  const orders = await Order.findAll({ include: [Product, User] });
+  console.log(orders.map(order => order.toJSON()));
+}
+
+module.exports = { createOrder, listOrders };
