@@ -1,4 +1,5 @@
 const { User } = require('../models');
+const Table = require('cli-table');
 
 async function createUser() {
   const inquirer = (await import('inquirer')).default;
@@ -19,7 +20,27 @@ async function createUser() {
 
 async function listUsers() {
   const users = await User.findAll();
-  console.log(users.map(user => user.toJSON()));
+  
+  // Create a table instance
+  const table = new Table({
+    head: ['ID', 'Username', 'Created At', 'Updated At'],
+    colWidths: [5, 20, 25, 25]
+  });
+
+  // Add rows to the table
+  users.forEach(user => {
+    const createdAt = user.createdAt.toISOString().split('T')[0];
+    const updatedAt = user.updatedAt.toISOString().split('T')[0];
+    table.push([
+      user.id,
+      user.username,
+      createdAt,
+      updatedAt
+    ]);
+  });
+
+  // Print the table
+  console.log(table.toString());
 }
 
 async function editUser() {

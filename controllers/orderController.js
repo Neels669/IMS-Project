@@ -1,4 +1,5 @@
 const { Order, Product, StockMovement, User, Category } = require('../models');
+const Table = require('cli-table');
 
 async function createOrder() {
   const inquirer = (await import('inquirer')).default;
@@ -42,9 +43,34 @@ async function createOrder() {
 }
 
 async function listOrders() {
-  const inquirer = (await import('inquirer')).default;
   const orders = await Order.findAll({ include: [Product, User] });
-  console.log(orders.map(order => order.toJSON()));
+
+  // Create a table instance
+  const table = new Table({
+    head: ['ID', 'Product Name', 'Quantity', 'Price', 'Total Value', 'User Name', 'Date', 'Time'],
+    colWidths: [5, 20, 10, 10, 15, 20, 15, 10]
+  });
+
+  // Add rows to the table
+  orders.forEach(order => {
+    const price = order.Product.price;
+    const totalValue = order.quantity * price;
+    const date = order.createdAt.toISOString().split('T')[0];
+    const time = order.createdAt.toISOString().split('T')[1].split('.')[0];
+    table.push([
+      order.id,
+      order.Product.name,
+      order.quantity,
+      price.toFixed(2),
+      totalValue.toFixed(2),
+      order.User ? order.User.username : 'Unknown',
+      date,
+      time
+    ]);
+  });
+
+  // Print the table
+  console.log(table.toString());
 }
 
 module.exports = { createOrder, listOrders };

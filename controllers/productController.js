@@ -1,4 +1,5 @@
 const { Product, Category } = require('../models');
+const Table = require('cli-table');
 
 async function createProduct() {
   const inquirer = (await import('inquirer')).default;
@@ -28,7 +29,27 @@ async function createProduct() {
 
 async function listProducts() {
   const products = await Product.findAll({ include: Category });
-  console.log(products.map(p => p.toJSON()));
+  
+  // Create a table instance
+  const table = new Table({
+    head: ['ID', 'Product Name', 'Description', 'Quantity', 'Price', 'Category Name'],
+    colWidths: [5, 20, 30, 10, 10, 20]
+  });
+
+  // Add rows to the table
+  products.forEach(product => {
+    table.push([
+      product.id,
+      product.name,
+      product.description,
+      product.quantity,
+      product.price.toFixed(2),
+      product.Category.name
+    ]);
+  });
+
+  // Print the table
+  console.log(table.toString());
 }
 
 async function editProduct() {

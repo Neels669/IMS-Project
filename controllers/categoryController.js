@@ -1,4 +1,5 @@
 const { Category } = require('../models');
+const Table = require('cli-table');
 
 async function createCategory() {
   const inquirer = (await import('inquirer')).default;
@@ -17,7 +18,23 @@ async function createCategory() {
 
 async function listCategories() {
   const categories = await Category.findAll();
-  console.log(categories.map(c => c.toJSON()));
+  
+  // Create a table instance
+  const table = new Table({
+    head: ['ID', 'Category Name'],
+    colWidths: [5, 20]
+  });
+
+  // Add rows to the table
+  categories.forEach(category => {
+    table.push([
+      category.id,
+      category.name
+    ]);
+  });
+
+  // Print the table
+  console.log(table.toString());
 }
 
 async function editCategory() {

@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Neels669/IMS-Project#readme",
   "dependencies": {
+    "cli-table": "^0.3.11",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "inquirer": "^9.2.23",
